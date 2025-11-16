@@ -87,3 +87,74 @@ p1 <- ggplot(data, aes(x = feature1, y = feature2,
 
 print(p1)
 ```
+
+# Plotting k-medoids clusters
+
+```{r kmedoids}
+# K-Medoids: Color = predicted cluster, Shape = true label
+p2 <- ggplot(data, aes(x = feature1, y = feature2, 
+                       color = KMedoids_Cluster, shape = true_label)) +
+  geom_point(size = 3, alpha = 0.7) +
+  scale_shape_manual(values = c(16, 17, 15)) +  # circle, triangle, square
+  ggtitle("K-Medoids Clustering") +
+  labs(subtitle = "Color = K-Medoids Cluster, Shape = True Label",
+       color = "K-Medoids Cluster",
+       shape = "True Class") +
+  theme_minimal()
+
+# print the k medoids clustering
+print(p2)
+```
+
+```{r}
+# Mark medoids with black edges
+data$is_medoid <- FALSE
+data$is_medoid[kmedoids_result$id.med] <- TRUE
+
+p3 <- ggplot(data, aes(x = feature1, y = feature2, 
+                       color = KMedoids_Cluster, shape = true_label)) +
+  geom_point(size = 3, alpha = 0.7) +
+  geom_point(data = data[data$is_medoid, ], 
+             color = "black", size = 5, shape = 1, stroke = 2) +  # Circle outline
+  scale_shape_manual(values = c(16, 17, 15)) +
+  ggtitle("K-Medoids Clustering") +
+  labs(subtitle = "Color = Cluster, Shape = True Label, Black Circle = Medoids",
+       color = "K-Medoids Cluster",
+       shape = "True Class") +
+  theme_minimal()
+
+print(p3)
+```
+
+```{r}
+library(gridExtra)
+grid.arrange(p1, p2, p3, ncol = 2)
+```
+
+
+#Iris Dataset Experiment
+
+```{r iris experiment, eval=FALSE}
+data_iris <- iris[, 3:4]
+true_lab <- iris$Species
+
+pam_res <- pam(data_iris, 3)
+
+df_iris <- data.frame(
+  x = data_iris[,1],
+  y = data_iris[,2],
+  true_label = true_lab,
+  cluster = factor(pam_res$clustering)
+)
+
+medoid_pts <- df_iris[pam_res$medoids, ]
+
+ggplot(df_iris, aes(x, y, shape = true_label, color = cluster)) +
+  geom_point(size = 3) +
+  geom_point(data = medoid_pts,
+             aes(x, y),
+             shape = 21, fill = "orange",
+             color = "black", size = 6, stroke = 2) +
+  theme_minimal() +
+  labs(title = "Iris Dataset - K-Medoids Clustering")
+```
