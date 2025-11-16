@@ -1,0 +1,89 @@
+---
+title: "Lab 11"
+output: html_document
+Author: Saheedat Abbas
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+In this analysis, we simulate data to apply both **K-Means** and **K-Medoids** clustering algorithms, compare their results, and visualize the clustering outcomes. We also measure the time taken for each clustering method.
+
+
+```{r Load Required Libraries}
+library(cluster)      # For K-Medoids (PAM)
+library(factoextra)   # For visualization
+library(ggplot2)      # For plotting
+library(tictoc)       # For measuring execution time
+
+```
+
+```{r data prep}
+# Set random seed for reproducibility
+set.seed(123)
+```
+
+```{r}
+#Create 3 clusters with normal distribution
+n <- 8000  # Total number of data points
+cluster1 <- data.frame(x = rnorm(n/3, mean = 2, sd = 0.5), y = rnorm(n/3, mean = 2, sd = 0.5))
+cluster2 <- data.frame(x = rnorm(n/3, mean = 6, sd = 0.5), y = rnorm(n/3, mean = 6, sd = 0.5))
+cluster3 <- data.frame(x = rnorm(n/3, mean = 10, sd = 0.5), y = rnorm(n/3, mean = 2, sd = 0.5))
+```
+
+```{r}
+#Combine clusters into one dataset
+data <- rbind(cluster1, cluster2, cluster3)
+colnames(data) <- c("feature1", "feature2")
+```
+
+```{r}
+# Normalize the data
+scaled_data <- scale(data)
+```
+
+#Apply K-Means Clustering
+
+```{r k-means}
+tic("K-Means")  # Start timer
+kmeans_result <- kmeans(scaled_data, centers = 3, nstart = 10)
+toc()  # Stop timer
+```
+
+# Apply K-Medoids Clustering
+
+```{r k-medoids}
+tic("K-Medoids")  # Start timer
+kmedoids_result <- pam(scaled_data, 3)
+toc()  # Stop timer
+```
+
+# Prep data for visualization
+
+```{r get memberships }
+data$KMeans_Cluster <- as.factor(kmeans_result$cluster)
+data$KMedoids_Cluster <- as.factor(kmedoids_result$clustering)
+
+# Add true class labels
+data$true_label <- as.factor(c(rep("1", n/3), rep("2", n/3), rep("3", n/3)))
+```
+
+# Plotting k-means clusters
+
+```{r}
+# K-Means: Color = predicted cluster, Shape = true label
+p1 <- ggplot(data, aes(x = feature1, y = feature2, 
+                       color = KMeans_Cluster, shape = true_label)) +
+  geom_point(size = 3, alpha = 0.7) +
+  scale_shape_manual(values = c(16, 17, 15)) +  # circle, triangle, square
+  ggtitle("K-Means Clustering") +
+  labs(subtitle = "Color = K-Means Cluster, Shape = True Label",
+       color = "K-Means Cluster",
+       shape = "True Class") +
+  theme_minimal()
+
+print(p1)
+```
